@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -9,16 +10,29 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jamesjarvis/rbac-example/pkg/access"
+	"github.com/jamesjarvis/rbac-example/pkg/permit"
 	"github.com/jamesjarvis/rbac-example/pkg/service"
 	"github.com/jamesjarvis/rbac-example/pkg/storage"
+	"github.com/permitio/permit-golang/pkg/config"
+	permitio "github.com/permitio/permit-golang/pkg/permit"
 )
 
 var serviceClient *service.Service
 
 func main() {
+	// Initialise arguments.
+	apiKey := flag.String("permit_api_key", "", "API key for Permit authentication")
+	flag.Parse()
+
 	// Initialise Service.
 	storageClient := storage.New()
-	accessClient := access.New()
+	var accessClient service.AccessClient
+	if *apiKey != "" {
+		permitClient := permitio.New(config.NewConfigBuilder(*apiKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build())
+		accessClient = permit.New(permitClient)
+	} else {
+		accessClient = access.New()
+	}
 
 	// Instantiate global service
 	serviceClient = service.New(storageClient, accessClient)

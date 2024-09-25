@@ -1,20 +1,28 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/jamesjarvis/rbac-example/pkg/access"
+	"github.com/jamesjarvis/rbac-example/pkg/service"
+	"github.com/jamesjarvis/rbac-example/pkg/storage"
 )
 
-// Global in-memory map to store key-value pairs
-var store = make(map[string]string)
-var mu sync.RWMutex // Mutex to handle concurrent access
+var serviceClient *service.Service
 
 func main() {
+	// Initialise Service.
+	storageClient := storage.New()
+	accessClient := access.New()
+
+	// Instantiate global service
+	serviceClient = service.New(storageClient, accessClient)
+
 	// Initialize a new router
 	r := mux.NewRouter()
 
@@ -29,26 +37,41 @@ func main() {
 
 // GET /v1/map/{key} - Handler to get a value by key
 func getValue(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["key"]
-
-	mu.RLock() // Lock for reading
-	value, ok := store[key]
-	mu.RUnlock()
-
-	if ok {
-		http.StatusUnauthorized
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, value)
-	} else {
-		http.Error(w, "Key not found", http.StatusNotFound)
+	key, err := getKey(r)
+	if err != nil {
+		handleError(w, err)
+		return
 	}
+
+	userID, err := getUserID(r)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	value, err := serviceClient.Get(userID, key)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, value)
 }
 
 // POST /v1/map/{key} - Handler to set a value by key
 func setValue(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["key"]
+	key, err := getKey(r)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	userID, err := getUserID(r)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
 	// Read the request body to get the value
 	body, err := io.ReadAll(r.Body)
@@ -58,10 +81,46 @@ func setValue(w http.ResponseWriter, r *http.Request) {
 	}
 	value := string(body)
 
-	mu.Lock() // Lock for writing
-	store[key] = value
-	mu.Unlock()
+	err = serviceClient.Set(userID, key, value)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Value set successfully")
+	fmt.Fprint(w, value)
+}
+
+// getKey extracts the key from the request url parameters.
+func getKey(r *http.Request) (string, error) {
+	vars := mux.Vars(r)
+	key, ok := vars["key"]
+	if !ok {
+		return "", errors.New("key not found")
+	}
+	return key, nil
+}
+
+// getUserID extracts the user value from the request headers.
+func getUserID(r *http.Request) (string, error) {
+	userHeader, ok := r.Header["User"]
+	if !ok || len(userHeader) != 1 {
+		return "", errors.New("User not found in headers")
+	}
+	userID := userHeader[0]
+	return userID, nil
+}
+
+// handleError sets http status codes for the given error.
+func handleError(w http.ResponseWriter, err error) {
+	if errors.Is(err, service.Error_UNAUTHORISED) {
+		http.Error(w, "UNAUTHORISED", http.StatusUnauthorized)
+		return
+	}
+	if errors.Is(err, service.Error_NOTFOUND) {
+		http.Error(w, "NOT_FOUND", http.StatusNotFound)
+		return
+	}
+	http.Error(w, err.Error(), http.StatusBadRequest)
+	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"strings"
 
 	"github.com/jamesjarvis/rbac-example/pkg/service"
 	"github.com/permitio/permit-golang/pkg/config"
@@ -31,7 +32,7 @@ func main() {
 	resourceMap := models.NewResourceCreate("map", "Map", map[string]models.ActionBlockEditable{"get": *actionGet, "set": *actionSet})
 	resourceMap.SetName("map")
 	_, err := permitClient.Api.Resources.Create(ctx, *resourceMap)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 
@@ -39,48 +40,48 @@ func main() {
 	roleReader := models.NewRoleCreate("reader", "Reader")
 	roleReader.SetPermissions([]string{"map:get"})
 	_, err = permitClient.Api.Roles.Create(ctx, *roleReader)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	roleWriter := models.NewRoleCreate("writer", "Writer")
 	roleWriter.SetPermissions([]string{"map:set"})
 	_, err = permitClient.Api.Roles.Create(ctx, *roleWriter)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 
 	// Set up users
 	alice := models.NewUserCreate("alice")
 	_, err = permitClient.Api.Users.Create(ctx, *alice)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	bob := models.NewUserCreate("bob")
 	_, err = permitClient.Api.Users.Create(ctx, *bob)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	charli := models.NewUserCreate("charli")
 	_, err = permitClient.Api.Users.Create(ctx, *charli)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 
 	// Set up roles on users
 	_, err = permitClient.Api.Users.AssignRole(ctx, "alice", "reader", "default")
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	_, err = permitClient.Api.Users.AssignRole(ctx, "alice", "writer", "default")
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	_, err = permitClient.Api.Users.AssignRole(ctx, "bob", "writer", "default")
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 	_, err = permitClient.Api.Users.AssignRole(ctx, "charli", "reader", "default")
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
 		panic(err)
 	}
 }

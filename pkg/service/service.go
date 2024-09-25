@@ -33,6 +33,10 @@ func New(
 // Get accepts a user and a key, and returns either the value associated with that key,
 // or an error if encountered.
 func (s *Service) Get(userID string, key string) (string, error) {
+	if !s.access.Check(userID, "get") {
+		return "", Error_UNAUTHORISED
+	}
+
 	value, ok := s.storage.Get(key)
 	if !ok {
 		return "", fmt.Errorf("error:%w key:%q", Error_NOTFOUND, key)
@@ -43,6 +47,10 @@ func (s *Service) Get(userID string, key string) (string, error) {
 // Set accepts a user, key and value, and will attempt to set the value with that key,
 // or return an error if encountered.
 func (s *Service) Set(userID, key, value string) error {
+	if !s.access.Check(userID, "set") {
+		return Error_UNAUTHORISED
+	}
+
 	s.storage.Set(key, value)
 	return nil
 }

@@ -10,7 +10,7 @@ It is a HTTP Server, mimicking a string:string dictionary, with the following en
 - `POST /v1/map/{key}`
   - The POST body is the `value`
   - Returns the same string `value` with status 200 if set
-  - Returns `UNAUTHORISED` with status 403 if not allowed
+  - Returns `UNAUTHORISED` with status 401 if not allowed
 
 ## How to Run and Test
 
@@ -34,6 +34,14 @@ In a separate terminal, start the server running on localhost:8080.
 
 ```bash
 $ go run cmd/main.go -permit_api_key=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
+```
+
+### Run all tests
+
+There is a helper script to check all authorisation is set up correctly.
+
+```bash
+$ scripts/run_tests.sh
 ```
 
 ### Value not found

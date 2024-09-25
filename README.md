@@ -14,10 +14,26 @@ It is a HTTP Server, mimicking a string:string dictionary, with the following en
 
 ## How to Run and Test
 
+### Running in memory
+
 In a separate terminal, start the server running on localhost:8080.
 
 ```bash
 $ go run cmd/main.go
+```
+
+### Running with Permit.io
+
+First, set up the default data:
+
+```bash
+go run scripts/permit_setup.go -permit_api_key=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
+```
+
+In a separate terminal, start the server running on localhost:8080.
+
+```bash
+$ go run cmd/main.go -permit_api_key=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
 ```
 
 ### Value not found

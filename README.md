@@ -16,7 +16,7 @@ It is a HTTP Server, mimicking a string:string dictionary, with the following en
 
 ### Running in memory
 
-In a separate terminal, start the server running on localhost:8080.
+Start the server running on localhost:8080.
 
 ```bash
 $ go run cmd/main.go
@@ -24,21 +24,31 @@ $ go run cmd/main.go
 
 ### Running with Permit.io
 
-First, set up the default data:
+[Permit.io](https://permit.io) is a third party authorisation provider, that provides an easy to integrate with API for role based access control.
+For our purposes, we will use this as an alternative for our in memory solution.
+
+To get started, you'll need to grab an API key from [https://app.permit.io/settings/api-keys](https://app.permit.io/settings/api-keys) (you'll need to create a free account first!).
+Store this somewhere:
 
 ```bash
-go run scripts/permit_setup.go -permit_api_key=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
+$ PERMIT_API_KEY=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
 ```
 
-In a separate terminal, start the server running on localhost:8080.
+Set up the default data:
 
 ```bash
-$ go run cmd/main.go -permit_api_key=permit_key_skkdfbljsdfudfuybdfuygoydfubydkfub
+$ go run scripts/permit_setup.go -permit_api_key=$PERMIT_API_KEY
+```
+
+Then, start the server running on localhost:8080.
+
+```bash
+$ go run cmd/main.go -permit_api_key=$PERMIT_API_KEY
 ```
 
 ### Run all tests
 
-There is a helper script to check all authorisation is set up correctly.
+There is a helper script to check all authorisation is set up correctly, this should be run in a separate terminal.
 
 ```bash
 $ scripts/run_tests.sh

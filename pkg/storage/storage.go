@@ -18,18 +18,19 @@ func New() *Storage {
 }
 
 // Get returns the value at location "key", and a boolean indicating whether it exists or not.
-func (s *Storage) Get(key string) (string, bool) {
+func (s *Storage) Get(key string) (string, bool, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	value, exists := s.values[key]
-	return value, exists
+	return value, exists, nil
 }
 
 // Set replaces the value at "key" with the provided value.
-func (s *Storage) Set(key, value string) {
+func (s *Storage) Set(key, value string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.values[key] = value
+	return nil
 }

@@ -4,8 +4,8 @@ import "fmt"
 
 // StorageClient provides access to a key-value map.
 type StorageClient interface {
-	Get(key string) (value string, exists bool)
-	Set(key string, value string)
+	Get(key string) (value string, exists bool, err error)
+	Set(key string, value string) error
 }
 
 // AccessClient enables the ability to check authorisation for a given user.
@@ -37,9 +37,12 @@ func (s *Service) Get(userID string, key string) (string, error) {
 		return "", Error_UNAUTHORISED
 	}
 
-	value, ok := s.storage.Get(key)
+	value, ok, err := s.storage.Get(key)
+	if err != nil {
+		return "", fmt.Errorf("error getting value for key:%q error:%w", key, err)
+	}
 	if !ok {
-		return "", fmt.Errorf("error:%w key:%q", Error_NOTFOUND, key)
+		return "", fmt.Errorf("error getting value for key:%q error:%w", key, Error_NOTFOUND)
 	}
 	return value, nil
 }
@@ -51,6 +54,9 @@ func (s *Service) Set(userID, key, value string) error {
 		return Error_UNAUTHORISED
 	}
 
-	s.storage.Set(key, value)
+	err := s.storage.Set(key, value)
+	if err != nil {
+		return fmt.Errorf("error setting value for key:%q error:%w", key, err)
+	}
 	return nil
 }
